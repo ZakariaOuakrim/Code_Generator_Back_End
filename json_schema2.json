@@ -1,0 +1,159 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "title":"Class",
+  "description": "Class information",  
+  
+  "required": ["package_name","name","table_name","annotations","properties","methods"],
+
+  "properties": {
+    "package_name": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z]+"
+    },
+    "table_name": {
+      "type": "string"
+    },
+    "annotations": {
+      "type": "object",
+      "properties": {
+        "is_Entity": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "is_Entity"
+      ]
+    },
+    "properties": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "is_injected": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[a-zA-Z]+"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "is_injected",
+            "name",
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "column_name": {
+              "type": "string"
+            },
+            "is_primary_key": {
+              "type": "boolean"
+            },
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "column_name",
+            "is_primary_key",
+            "name",
+            "type"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "column_name": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "column_name",
+            "name",
+            "type"
+          ]
+        }
+      ]
+    },
+    "methods": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "return_type": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "type"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "type"
+                  ]
+                }
+              ]
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "return_type",
+            "parameters",
+            "text"
+          ]
+        }
+      ]
+    }
+  }
+}

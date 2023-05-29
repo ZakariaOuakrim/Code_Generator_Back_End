@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Json File</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+ integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO"
+ crossorigin="anonymous">
+</head>
+<body>
+	<h1>Upload your json File</h1>
+	<form action="#" th:action="@{/upload}" method="POST" enctype="multipart/form-data">
+		<input type="file" name="file" />
+		<input type="submit" value="Upload">
+		<span th:text="${validation_message}" id="val_msg"></span>
+		<span th:text="${error_message}" id="err_msg"></span>
+	</form>
+	
+	
+	<div class="container" id="class_txt">
+		<span th:text="${class_txt}" id="gen_txt"></span>
+		
+		<div th:if="${formSubmitted}" id="div_save">
+			<div id="div_save">
+				<button>Save</button>
+			</div>
+		</div>
+	
+	</div>
+	
+</body>
+
+
+</html>

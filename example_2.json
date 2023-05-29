@@ -1,0 +1,95 @@
+[{  
+  "package_name": "com.example",
+  "name": "Person",   
+  "table_name":"person_table",
+  "annotations":{
+    "is_Entity":true
+  },
+  "properties":[
+    {
+      "is_injected":true,
+      "name": "name",
+      "type": "String"
+    },
+    {
+      "column_name":"age_student",
+      "is_primary_key":true,
+      "name":"age",
+      "type":"int"
+    },
+    {
+      "column_name":"adress",
+      "name":"adress",
+      "type":"String"
+    }
+  ],
+  "methods":[
+   {
+      "name":"Speak",
+      "return_type":"String",
+      "parameters":[
+        {
+          "name":"name",
+          "type":"speach"
+        },
+        {
+          "name":"age",
+          "type":"int"
+        }
+      ],
+      "text":"return speach;"
+    }
+  ]
+},  
+  {
+
+    "package_name": "com.example",
+    "name": "Student",
+    "table_name":"student_table",
+    "annotations":{
+      "is_Entity":false,
+      "is_Repository":true,
+      "is_Service":true,
+      "is_Controller":true,
+      "is_Component":true
+    },
+    "properties": [
+      {
+        "is_injected":true,
+        "name": "name",
+        "type": "String"
+      },
+      {
+        "column_name":"id_student",
+        "is_primary_key":true,
+        "column_name":"id_student",
+        "name":"id",
+        "type":"int"
+      },
+      {
+        "column_name":"adress",
+        "name":"adress",
+        "type":"String"
+      }
+    ],
+    "methods":[
+      {
+        "name":"Speak",
+        "return_type":"String",
+        "parameters":[
+          {
+            "name":"name",
+            "type":"speach"
+          },
+          {
+            "name":"age",
+            "type":"int"
+          }
+        ],
+        "text":"return speach;"
+      }
+    ]
+    
+  }
+
+]

@@ -1,0 +1,58 @@
+@charset "UTF-8";
+
+.main_div{
+	padding:0;
+	margin:0;
+	box-sizing: border-box;
+	
+	width: 100%;
+    text-align: center; 
+	display: flex;
+	flex-direction: row;
+}
+
+.left_div,right_div{
+	width:50%;
+	height: 100vh;
+		
+}
+.left_div{
+	background-color: gray;
+	float:left;
+
+}
+
+.right_div{
+	background-color: #c0c0c0;
+	float:right;
+
+	
+}
+
+#inputs_div{
+	display:flex;
+	flex-direction: column;
+	width: 170px;
+	margin-left: 40px;
+}
+
+#class_txt{
+	display: flex;
+	float:right;
+	width: 50%;
+	
+		
+}
+#val_msg{
+	color: green;
+}
+
+#err_msg{
+	color:red;
+}
+
+span{
+	display: block;
+}
+
+

@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",   
+  "type": "object",  
+  "title": "Class",  
+  "description": "Class information",  
+  "additionalProperties": true,  
+  "required": ["package_name","Class_name","class_properties","class_methods"],
+  "properties": {
+      "package_name":{
+        "title":"Package name",
+        "type":"string",
+        "pattern": "^[a-zA-Z]+"
+      },
+      "Class_name":{
+        "title":"Class name",
+        "type":"string", 
+        "pattern": "^[A-Z]+"
+      },
+      "Class_table_name":{
+        "description": "For Entity Classes if you wan't to use a different table name than the class name.",
+        "title":"Table name",
+        "type":"string"
+      },
+      "DAO_annotations":{
+        "title":"DAO and Entity annotations",
+        "type":"array",
+        "items": {
+          "type": "string",
+          "enum":["","Entity","Controller","Configuration","Repository", "Component"]}
+      },
+      "Service_annotations":{
+        "title":"Service annotations",
+        "type":"array",
+        "items": {
+          "type": "string",
+          "enum":["","Service"]}
+      },
+      "class_properties":{
+        "title":"Property",
+        "type":"array",
+        "items":{ 
+          "type":"object",
+          "properties": {
+            "property_annotation":{
+              "title":"Property Annotation",
+              "type":"array",
+              "items": {
+                "type":"string",
+                "enum": ["","Autowired","id","GeneratedValue","Column name"]}
+            },
+            "property_column_name":{
+              "title":"Column name",
+              "description": "If you have named your column differently than the property name.",
+              "type":"string"
+            },
+            "property_visibility":{
+              "title":"Property Visibility",
+              "type":"string",
+              "enum":["private","public","protected"]
+            },
+            "property_type":{
+              "title": "Property Type",
+              "type":"string",
+              "pattern": "^[a-zA-Z]+"
+
+            },
+            "property_name":{
+              "title": "Property Name",
+              "type":"string",
+              "pattern": "^[a-z]+"
+            }
+      
+          }
+        }
+      }, 
+      "class_methods":{
+        "title":"Method",
+        "type":"array",
+        "items":{
+          "type":"object",
+          "properties":{
+            "method_annotation":{
+              "title":"Method Annotation",
+              "type":"string",
+              "enum":["","RequestMapping","GetMapping","PostMapping","PutMapping","DeleteMapping"]
+            },
+            "method_visibility":{
+              "title": "Method Visibility",
+              "type":"string",
+              "enum":["","public","private","protected"]
+            },
+            "method_return_type":{
+              "title": "Method Return Type",
+              "type":"string",
+              "pattern": "^[a-zA-Z]+"
+
+            },
+            "method_name":{
+              "title": "Method Name",
+              "type":"string",
+              "pattern": "^[a-zA-Z]+"
+            },
+            "method_parameters":{
+              "title":"Parameter",
+              "type":"array",
+              "items":{
+                "type":"object",
+                "properties":{
+                  "parameter_type":{
+                    "title": "Parameter Type",
+                    "type":"string",
+                    "pattern": "^[a-zA-Z]+"
+
+                  },
+                  "parameter_name":{
+                    "title": "Parameter Name",
+                    "type":"string",
+                    "pattern": "^[a-zA-Z]+"
+                    
+                  }
+                }
+              }
+            },
+            "method_body":{
+              "title":"Method Body",
+              "type":"string",
+              "allOf":[{
+                "pattern": "^[a-zA-Z]+"
+              },{
+                "pattern": ".*;$"
+              }
+              ]
+            }
+          }
+        }
+      }
+    
+    }
+
+  }
+
