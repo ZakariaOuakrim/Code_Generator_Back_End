@@ -30,4 +30,5 @@ public class RequestCreateClass {
 	private MyMethod[] methods;
 	private String requestMappingURL;
 	private String mode;
+	private boolean isEmbeddedId;
 }

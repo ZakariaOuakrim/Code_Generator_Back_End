@@ -3,6 +3,8 @@ package com.stage.code_gen.Models;
 import java.util.List;
 import java.util.Set;
 
+import javax.persistence.EmbeddedId;
+
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 

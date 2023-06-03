@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -27,6 +28,7 @@ public class JwtService {
 	
 	public <T> T extractClaim(String token,Function<Claims, T> claimsResolver){
 		 final Claims claims = extarctAllClaims(token);
+		 
 		 return claimsResolver.apply(claims);
 	}
 	public String generateToken(UserDetails userDetails) {
@@ -59,12 +61,12 @@ public class JwtService {
 	}
 
 	private Claims extarctAllClaims(String token) {
-		return  Jwts
-				.parserBuilder()
-				.setSigningKey(getSignInKey()) 
-				.build()
-				.parseClaimsJws(token)
-				.getBody();
+			return  Jwts
+					.parserBuilder()
+					.setSigningKey(getSignInKey()) 
+					.build()
+					.parseClaimsJws(token)
+					.getBody();
 	}
 	private Key getSignInKey() {
 		// TODO Auto-generated method stub

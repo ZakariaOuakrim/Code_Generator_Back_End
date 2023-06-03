@@ -52,6 +52,7 @@ public class ClassGenerationService {
 			javaCode=generateController(_class);
 			return javaCode.toString();
 		}
+	
 		JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
 		PropertySource<JavaClassSource> property;
 		FieldSource<JavaClassSource> field;
@@ -79,7 +80,7 @@ public class ClassGenerationService {
 		if (properties != null && !properties.isEmpty()) {
 			for (MyProperty prop : properties) {
 				property = javaClass.addProperty(prop.getType(), prop.getName());
-				if(!_class.getClassType().equals("Entity")){
+				if(!_class.getClassType().equals("Entity") || !_class.getClass().equals("Embeddable")){
 					property.removeAccessor().removeMutator();
 				}
 				field = javaClass.getField(prop.getName());
@@ -97,7 +98,12 @@ public class ClassGenerationService {
 					field.setPackagePrivate();
 					break;
 				}
-				
+				System.out.println("101 -----is my class "+_class.getId()+" embdedded ??"+_class.isEmbeddedId());
+				if(_class.isEmbeddedId() && !FieldAlreadyGotAssigndTheIdAnnotation) {
+					field.addAnnotation("javax.persistence.EmbeddedId");
+					FieldAlreadyGotAssigndTheIdAnnotation=true;
+
+				}
 
 				if (_class.isIdGenerate() && !FieldAlreadyGotAssigndTheIdAnnotation) {
 					field.addAnnotation("javax.persistence.Id");
@@ -216,8 +222,10 @@ public class ClassGenerationService {
 			return "org.springframework.stereotype.Service";
 		case "Configuration":
 			return "org.springframework.context.annotation.Configuration";
+		case "Embeddable":
+			return "javax.persistence.Embeddable";
 		default:
-			return "";
+			return ClassType;
 		}
 	}
 
@@ -241,6 +249,8 @@ public class ClassGenerationService {
 		
 		return javaClass.toString();
 	}
+	
+
 
 	private String generateService(RequestCreateClass _class) {
 		JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
@@ -266,17 +276,21 @@ public class ClassGenerationService {
 
 	private String generateJpaRepository(RequestCreateClass _class) {
 		MyProperty idPropertyType = getIdPropertyType(_class);
+		System.out.println("");
 		if (idPropertyType != null) {
 			// make sure that the first letter of the type is uppercase
 			JavaInterfaceSource javainterface = Roaster.create(JavaInterfaceSource.class);
 			String idPropertyTypeWithUpperCase = getIdPropertyType(idPropertyType.getType());
+			switch(idPropertyTypeWithUpperCase) {
+				case "Int":
+					idPropertyTypeWithUpperCase = "Interger";
+					break;
+			}
 			// setting the name of the repo
 			javainterface.setName(_class.getClassName());
 			
 			Project project = projectRepository.findByClassesId(_class.getId());
 			javainterface.addImport(project.getGroupId()+".Entity."+_class.getClassName().replace("Repository", ""));
-
-
 			javainterface.setPackage(_class.getPackageName());
 			javainterface.addAnnotation("org.springframework.stereotype.Repository");
 			javainterface.addInterface("org.springframework.data.jpa.repository.JpaRepository<"
@@ -295,12 +309,12 @@ public class ClassGenerationService {
 		// -------------------getting the entity class
 		MyClass _class = classRepository.findById(requestCreateClass.getId() - 1).get();
 		if (properties != null) {
-			if (_class.isIdGenerate()) {
+			if (_class.isIdGenerate() || _class.isEmbeddedId()) {
 				return properties.get(0);
-			} else {
+			}
+			else {
 				return null;
 			}
-
 		}
 		return null;
 	}

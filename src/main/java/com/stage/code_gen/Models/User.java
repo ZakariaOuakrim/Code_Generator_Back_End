@@ -22,6 +22,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,6 +56,8 @@ public class User implements UserDetails{
 	@JoinColumn(name="up_fk",referencedColumnName = "user_email")
 	private List<Project> projects;
 	
+	@Column(name="app_setting")
+	private Long app_SettingId;
 	
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

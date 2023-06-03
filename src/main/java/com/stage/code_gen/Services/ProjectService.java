@@ -24,15 +24,16 @@ public class ProjectService {
 	
 	public void createNewProject(Project project,String email) {
 		User user= userRepository.findByemail(email);
-		project.setDependencies(new ArrayList<>());
-		project.getDependencies().add(dependencyRepository.findById(202L).get());
-		project.getDependencies().add(dependencyRepository.findById(203L).get());
-		project.getDependencies().add(dependencyRepository.findById(252L).get());
-		project.getDependencies().add(dependencyRepository.findById(552L).get());
-		project.getDependencies().add(dependencyRepository.findById(602L).get());
+		//default dependencies of a project when it's created
+		
+		project.setDependencies(defaultDependenciesOfNewleyCreatedProject());
+			
 		user.getProjects().add(project);
 		
 		userRepository.save(user);
+	}
+	public Project modifyProject(Project _project) {
+		return projectRepository.save(_project);
 	}
 	
 	public Project getProjectById(Long projectId) {
@@ -69,6 +70,20 @@ public class ProjectService {
 	
 	public void deleteProject(Long projectId) {
 		projectRepository.deleteById(projectId);
+	}
+	
+	private List<Dependency> defaultDependenciesOfNewleyCreatedProject(){
+		List<Dependency> defaultDependenciesOfANewProject = new ArrayList<>();
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(202L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(702L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(203L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(704L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(705L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(653L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(552L).get());
+		defaultDependenciesOfANewProject.add(dependencyRepository.findById(752L).get());
+
+		return defaultDependenciesOfANewProject;
 	}
 	
 	

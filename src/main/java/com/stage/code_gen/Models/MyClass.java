@@ -21,6 +21,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
+
 public class MyClass {
 	@Id
 	@GeneratedValue(strategy = jakarta.persistence.GenerationType.AUTO)
@@ -36,6 +37,8 @@ public class MyClass {
 	private String tableName;
 	private boolean isIdGenerate; //does the class has the @id
 	private boolean isGeneratedValue; //does the class has @GeneratedValue
+	private boolean isEmbeddedId; //does the class has an @EmbeddedId
 	private String generatedType;
 	private String requestMappingURL;
+	 
 }

@@ -51,13 +51,14 @@ public class XmlFileService {
 		_class.setService(true);
 		// --------------------------Properties----------------------
 		String propertyName;
-		String propertyType;
 		Element column;
 		String columnName;
 		String length;
+		String typeOfPropety;// used to get the type as a java type not an xml type
 		List<Element> propertyElements = classElement.getChildren("property");
 		
 		Element idElement = classElement.getChild("id");
+		
 		// if the class has an id then
 		if (idElement != null) {
 			// set the class to have the @id
@@ -66,7 +67,8 @@ public class XmlFileService {
 			_property = new MyProperty();
 			// setting the name and the type of the property
 			_property.setName(idElement.getAttributeValue("name"));
-			_property.setType(idElement.getAttributeValue("type"));
+			typeOfPropety = convertTypeOfPropertyFromXmlTypeToJavaType(idElement.getAttributeValue("type"));
+			_property.setType(typeOfPropety);
 
 			_property.setAccess_modifier("private");
 			// getting the column attributes
@@ -82,7 +84,7 @@ public class XmlFileService {
 			properties.add(_property);
 		}
 		RequestCreateClass compositeClass = null ;
-		//---------------------------------composite-id-----------------------
+		//---------------------------------composite-id this is the where the Composite Class get generated-----------------------
 		if(classElement.getChild("composite-id")!=null) {
 			Element compositeId;
 			Element columnComposite;
@@ -93,12 +95,16 @@ public class XmlFileService {
 			compositeId=classElement.getChild("composite-id");
 			compositeClass.setClassName(compositeId.getAttributeValue("class").replace("Hibernate.Model.", ""));
 			keyProperty = compositeId.getChildren("key-property");
-			compositeClass.setClassType("Entity");
+			
+			compositeClass.setClassType("Embeddable");//set the class to have the @Embeddable
+			
 			compositeClass.setPackageName("com.example.Entity");
 			for(Element keyProp : keyProperty) {
 				compositePop = new MyProperty();
 				compositePop.setName(keyProp.getAttributeValue("name"));
-				compositePop.setType(keyProp.getAttributeValue("type"));
+				//we need to test on the type property because it's different than the one java uses 
+				typeOfPropety = convertTypeOfPropertyFromXmlTypeToJavaType(keyProp.getAttributeValue("type"));
+				compositePop.setType(typeOfPropety);
 				columnComposite = keyProp.getChild("column");
 				compositePop.setColumnName(columnComposite.getAttributeValue("name"));
 				compositePop.setLength(columnComposite.getAttributeValue("length"));
@@ -106,7 +112,10 @@ public class XmlFileService {
 				compositeProperties.add(compositePop);
 			}
 			
-			_class.setIdGenerate(true);
+			
+			
+			//setting the property id Name and type
+			_class.setEmbeddedId(true);//set the class to have the @EmbeddedId
 			_property = new MyProperty();
 			_property.setName(compositeId.getAttributeValue("name"));
 			_property.setType(compositeId.getAttributeValue("class").replace("Hibernate.Model.", ""));
@@ -118,15 +127,14 @@ public class XmlFileService {
 			Long id= classService.addANewClass(compositeClass);
 			compositeClass.setId(id);
 			
-		}
+		}//--------------------end
 		
-		
-		for (Element propertyElement : propertyElements) {
-			//check if it has composite id 
-			
+		//add the rest of the properties
+		for (Element propertyElement : propertyElements) {			
 			_property = new MyProperty();
 			propertyName = propertyElement.getAttributeValue("name");
-			propertyType = propertyElement.getAttributeValue("type");
+			
+			typeOfPropety = convertTypeOfPropertyFromXmlTypeToJavaType(propertyElement.getAttributeValue("type"));
 			_property.setAccess_modifier("private");
 
 			// getting the name of the column and the length of the variable
@@ -136,7 +144,7 @@ public class XmlFileService {
 
 			// setting the property attributes
 			_property.setName(propertyName);
-			_property.setType(propertyType);
+			_property.setType(typeOfPropety);
 			_property.setLength(length);
 			_property.setColumnName(columnName);
 
@@ -147,11 +155,35 @@ public class XmlFileService {
 		if(compositeClass!=null) {
 			classes.add(compositeClass);
 		}
-		
 		classes.add(_class);
 		_class.setProjectId(idOfProject);
-		classService.addANewClass(_class);
-		
+		classService.addANewClass(_class); //saving the class
 		return classes;
 	}
+	
+	private String convertTypeOfPropertyFromXmlTypeToJavaType(String xmlType) {
+		switch(xmlType) {
+			case "string":
+				return "String";
+			case "big_decimal":
+				return "java.math.BigDecimal";
+			case "integer":
+				return "int";
+			case "character":
+				return "char";
+			case "date":
+				return "java.util.Date";
+			case "time":
+				return "java.sql.time";
+			case "timestamp":
+				return "java.sql.Timestamp";
+			case "text":
+				return "String";
+			default:
+				return xmlType;
+	
+		}
+	
+	}
+	
 }

@@ -51,7 +51,6 @@ public class ClassService {
 		if (requestCreateClass.getTableName() != null) {
 			myclass.setTableName(requestCreateClass.getTableName());
 		}
-	
 		myclass.setRequestMappingURL(requestCreateClass.getRequestMappingURL());
 		myclass.setClassType(requestCreateClass.getClassType());
 		myclass.setService(requestCreateClass.isService());
@@ -61,6 +60,7 @@ public class ClassService {
 		myclass.setIdGenerate(requestCreateClass.isIdGenerate());
 		myclass.setGeneratedType(requestCreateClass.getGeneratedType());
 		myclass.setGeneratedValue(requestCreateClass.isGeneratedValue());
+		myclass.setEmbeddedId(requestCreateClass.isEmbeddedId());
 		if (requestCreateClass.getMode() != null && requestCreateClass.getMode().equals("modify")) {
 			classRepository.findById(requestCreateClass.getId());
 			return 0L;
@@ -223,6 +223,7 @@ public class ClassService {
 		requestCreateClass.setIdGenerate(_class.isIdGenerate());
 		requestCreateClass.setGeneratedType(_class.getGeneratedType());
 		requestCreateClass.setRequestMappingURL(_class.getRequestMappingURL());
+		requestCreateClass.setEmbeddedId(_class.isEmbeddedId());
 		return requestCreateClass;
 	}
 

@@ -42,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stage.code_gen.Models.ApplicationSetting;
 import com.stage.code_gen.Models.Dependency;
 import com.stage.code_gen.Models.MyClass;
 import com.stage.code_gen.Models.MyMethod;
@@ -51,6 +52,7 @@ import com.stage.code_gen.Models.Project;
 import com.stage.code_gen.Repositories.ClassRepository;
 import com.stage.code_gen.Repositories.ProjectRepository;
 import com.stage.code_gen.Repositories.PropertyRepository;
+import com.stage.code_gen.Repositories.UserRepository;
 import com.stage.code_gen.Requests_Responses.RequestCreateClass;
 import com.stage.code_gen.Requests_Responses.RequestCreateProject;
 import com.stage.code_gen.Services.ClassGenerationService;
@@ -156,13 +158,21 @@ public class MyController {
 		return projectService.getAllProjects(email);
 	}
 
-	@PostMapping("/project/downloadProject")
-	public ResponseEntity<Resource> downloadProject(@RequestBody Project project) throws IOException {
-		projectGenerationService.generateProject(project);
-
+	@PostMapping("/project/downloadProject/{email}")
+	public ResponseEntity<Resource> downloadProject(@RequestBody Project project,@PathVariable("email") String email) throws IOException {
+		projectGenerationService.generateProject(project,email);
+		
+		String generationPath = "C:\\Users\\Dell\\Desktop\\generated_classes";
+		File myFile = new File(generationPath);
+		if(myFile.listFiles().length>0) {
+			for(File _file: myFile.listFiles()) {
+				_file.delete();
+			}
+		}
 		String folderPath = "C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId();
 		String zipFilePath = "C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + ".zip";
-
+	
+		
 		MavenProject _project = projectGenerationService.createPomFile(project);
 		projectGenerationService.generatePomFile(_project, folderPath);
 
@@ -176,6 +186,9 @@ public class MyController {
 		File fileZip = new File(zipFilePath);
 		Resource resource = new FileSystemResource(fileZip);
 		String contentType = "application/octet-stream";
+		
+		//we need to delete the project from the server 
+
 		return ResponseEntity.ok().contentType(MediaType.parseMediaType(contentType)).body(resource);
 	}
 
@@ -193,6 +206,10 @@ public class MyController {
 	@GetMapping("/project/getAllProjectsAdminVersion")
 	public List<Project> getAllProjects() {
 		return projectService.getAllProjectsAdminVersion();
+	}
+	@GetMapping("/project/getProjectById/{id}")
+	public Project getProjectById(@PathVariable("id") Long projectId) {
+		return projectService.getProjectById(projectId);
 	}
 
 	@PostMapping("/dependency/addANewDependency")
@@ -222,18 +239,26 @@ public class MyController {
 		projectService.deleteDependencyFromProject(projectId, dependencyId);
 		return "Deleted successfully";
 	}
+	@PutMapping("/project/modifyProject/{id}")
+	public void modifyProject(@PathVariable("id") Long id,@RequestBody Project project) {
+		Project existingProject = projectService.getProjectById(id);
+		project.setId(id);
+		existingProject = project;
+		projectService.modifyProject(existingProject);
+	}
+
 	
 	//delete a project
 	@DeleteMapping("/project/deleteProject/{projectId}")
-	public String deleteProject(@PathVariable("projectId") Long projectId) {
+	public void deleteProject(@PathVariable("projectId") Long projectId) {
 		//delete classes of project
 		for(MyClass _class:projectService.getProjectById(projectId).getClasses()) {
 			classService.deleteClass(_class.getId(), projectId);
 		}
 		//delete project
 		projectService.deleteProject(projectId);
-		return "Deleted successfully";
 	}
+	
 
 	@GetMapping("/dependency/projectDependencies/{id}")
 	public List<Long> getDependenciesOfAProjectById(@PathVariable("id") Long projectId) {
@@ -253,7 +278,7 @@ public class MyController {
 		existingDependency = dependency;
 		dependencyService.modifyDependency(dependency);
 	}
-
+	
 	// file uploading
 	@PostMapping("/file/upload/{email}")
 	public List<RequestCreateClass> uploadFile(@PathVariable("email") String email,@RequestParam("files") MultipartFile[] files) throws JDOMException {
@@ -265,7 +290,7 @@ public class MyController {
 			String fileName;
 			Project _project = new Project();
 			_project.setArtifactId("ProjectFromHibernateXmlConvertor");
-			_project.setGroupId("com.exmaple");
+			_project.setGroupId("com.example");
 			_project.setModelVersion("4.0.0");
 			_project.setVersion("1.0.0");
 			_project.setProjectVersion("jar");
@@ -289,5 +314,6 @@ public class MyController {
 		}
 		return null;
 	}
-
+	
+	
 }

@@ -2,6 +2,7 @@ package com.stage.code_gen.Services;
 
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.RandomStringUtils;
@@ -20,6 +21,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.stage.code_gen.Models.ApplicationSetting;
 import com.stage.code_gen.Models.Role;
 import com.stage.code_gen.Models.User;
 import com.stage.code_gen.Repositories.UserRepository;
@@ -43,6 +45,7 @@ public class AuthenticationService {
 	private final JwtService jwtService;
 	private final AuthenticationManager authenticationManager;
 	private final JavaMailSender mailSender;
+	private final ApplicationSettingService applicationSettingService;
 
 	private UserDetails loadUserByEmail(String email) {
 		User user = userRepository.findById(email).get();
@@ -53,7 +56,26 @@ public class AuthenticationService {
 			throw new UsernameNotFoundException("Email is not valid");
 		}
 	}
-
+	private void sendResetPasswordEmail(String email,String siteUrl) throws UnsupportedEncodingException, MessagingException {
+		String subject ="Reset password";
+		String senderName="SpringBoot code generator";
+		String mailContent="<p>Dear,<br> Please Follow this Link to reset your password";
+		mailContent+="<h3><a href=\"[[URL]]\" target=\"_self\">Click here to reset your password</h3>";
+		mailContent+="<p>Thank you<br> The SpringBoot Code Generator Team</p>";
+		String toAddress = email;
+		String fromAddress = "codegeneratorspringboot@gmail.com";
+		
+		MimeMessage message = mailSender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+		helper.setFrom(fromAddress,senderName);
+		helper.setTo(toAddress);
+		helper.setSubject(subject);
+		
+		String resetPasswordURL = siteUrl+"/"+email;
+		mailContent = mailContent.replace("[[URL]]",resetPasswordURL);
+		helper.setText(mailContent,true);
+		mailSender.send(message);
+	}
 	private void sendVerificationEmail(User user,String siteURL)  throws MessagingException, UnsupportedEncodingException{
 		String subject = "Please verify your registration";
 		String senderName="SpringBoot Code_Gen Team";
@@ -62,7 +84,7 @@ public class AuthenticationService {
 		mailContent+="<h3><a href=\"[[URL]]\" target=\"_self\">Click here to verify</h3>";
 		mailContent+="<p>Thank you<br> The SpringBoot Code_Gen Team</p>";
 		String toAddress=user.getEmail();
-		String fromAddress = "zakarialukyguy@gmail.com";
+		String fromAddress = "codegeneratorspringboot@gmail.com";
 		
 		
 		MimeMessage message =mailSender.createMimeMessage();
@@ -83,7 +105,8 @@ public class AuthenticationService {
 				.password(passwordEncoder.encode(request.getPassword())).role(Role.USER).build();
 		
 		user.setEnabled(false);
-
+		//setting the default settings of a user
+		user.setApp_SettingId(0L);
 		userRepository.save(user);
 		sendVerificationEmail(user,"http://localhost:4200/verifyAccount");
 		
@@ -117,4 +140,15 @@ public class AuthenticationService {
 		user.setRole(Role.USER);
 		userRepository.save(user);
 	}
+	public List<User> getAllUsers(){
+		return userRepository.findAll();
+	}
+	public User getUser(String _email) {
+		return userRepository.findById(_email).get();
+	}
+	public void userForgotPassword(String email) throws UnsupportedEncodingException, MessagingException {
+		sendResetPasswordEmail(email,"http://localhost:4200/verifyAccount");
+	}
+	
+	
 }
