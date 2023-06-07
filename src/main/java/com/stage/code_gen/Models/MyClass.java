@@ -38,8 +38,10 @@ public class MyClass {
 	private boolean isIdGenerate; //does the class has the @id
 	private boolean isGeneratedValue; //does the class has @GeneratedValue
 	private boolean isEmbeddedId; //does the class has an @EmbeddedId
+	private Long embeddedIdClassId;
 	private String generatedType;
 	private String requestMappingURL;
 	private Long idOfPropertyId;
+	
 	 
 }

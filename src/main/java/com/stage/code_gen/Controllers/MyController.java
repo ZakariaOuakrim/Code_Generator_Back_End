@@ -160,8 +160,9 @@ public class MyController {
 
 	@PostMapping("/project/downloadProject/{email}")
 	public ResponseEntity<Resource> downloadProject(@RequestBody Project project,@PathVariable("email") String email) throws IOException {
-		projectGenerationService.generateProject(project,email);
 		
+		projectGenerationService.generateProject(project,email);
+
 		String generationPath = "C:\\Users\\Dell\\Desktop\\generated_classes";
 		File myFile = new File(generationPath);
 		if(myFile.listFiles().length>0) {

@@ -126,7 +126,7 @@ public class XmlFileService {
 			compositeClass.setProjectId(idOfProject);
 			Long id= classService.addANewClass(compositeClass);
 			compositeClass.setId(id);
-			
+			_class.setEmbeddedIdClassId(id);
 		}//--------------------end
 		
 		//add the rest of the properties
@@ -157,6 +157,9 @@ public class XmlFileService {
 		}
 		classes.add(_class);
 		_class.setProjectId(idOfProject);
+		
+		
+		
 		classService.addANewClass(_class); //saving the class
 		return classes;
 	}
@@ -165,21 +168,30 @@ public class XmlFileService {
 		switch(xmlType) {
 			case "string":
 				return "String";
+			case "java.lang.String":
+				return "String";
 			case "big_decimal":
 				return "java.math.BigDecimal";
 			case "integer":
 				return "int";
 			case "character":
-				return "char";
+				return "Character";
 			case "date":
 				return "java.util.Date";
 			case "time":
 				return "java.sql.time";
 			case "timestamp":
 				return "java.sql.Timestamp";
+			case "Timestamp":
+				return "java.sql.Timestamp";
 			case "text":
 				return "String";
-			
+			case "blob":
+				return "java.sql.Blob";
+			case "clob":
+				return "java.sql.Clob";
+			case "char":
+				return "Character";
 			default:
 				return xmlType;
 	

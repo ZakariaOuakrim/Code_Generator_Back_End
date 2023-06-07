@@ -32,4 +32,6 @@ public class RequestCreateClass {
 	private String mode;
 	private boolean isEmbeddedId;
 	private Long idOfPropertyId;
+	private Long embeddedIdClassId;
+
 }

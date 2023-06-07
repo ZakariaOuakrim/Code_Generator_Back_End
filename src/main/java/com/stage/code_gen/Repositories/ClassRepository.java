@@ -19,5 +19,7 @@ public interface ClassRepository extends JpaRepository<MyClass, Long> {
 	List<MyClass> findByPackageName(String packageName);
 	
     MyClass findByClassName(String className);
+    List<MyClass> findAllByClassName(String className);
+
 
 }

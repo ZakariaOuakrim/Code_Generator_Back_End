@@ -62,6 +62,7 @@ public class ClassService {
 		myclass.setGeneratedValue(requestCreateClass.isGeneratedValue());
 		myclass.setEmbeddedId(requestCreateClass.isEmbeddedId());
 		myclass.setIdOfPropertyId(requestCreateClass.getIdOfPropertyId());
+		myclass.setEmbeddedIdClassId(requestCreateClass.getEmbeddedIdClassId());
 		if (requestCreateClass.getMode() != null && requestCreateClass.getMode().equals("modify")) {
 			classRepository.findById(requestCreateClass.getId());
 			return 0L;
@@ -112,14 +113,14 @@ public class ClassService {
 		MyClass _classService = null;
 		MyClass _classController = null;
 		if (requestCreateClass.isGenerateRepository()) {
-			_classRepo = createRepository(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
+			_classRepo = createRepository(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId(),classToGetId.getEmbeddedIdClassId());
 		}
 		if (requestCreateClass.isService()) {
-			_classService = createService(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
+			_classService = createService(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId(),classToGetId.getEmbeddedIdClassId());
 
 		}
 		if (requestCreateClass.isGenerateController()) {
-			_classController = createController(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
+			_classController = createController(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId(),classToGetId.getEmbeddedIdClassId());
 		}
 		try {
 			Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
@@ -141,7 +142,7 @@ public class ClassService {
 
 	}
 
-	private MyClass createRepository(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
+	private MyClass createRepository(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded,Long classId) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Repository");
 		_class.setClassType("JPA_INTERFACE");
@@ -149,12 +150,16 @@ public class ClassService {
 		Project project = projectRepository.findById(projectId).get();
 		_class.setPackageName(project.getGroupId() + ".Repositories");
 		_class.setIdOfPropertyId(idOfProperty);
-		if(isEntityClassEmbedded)
+		if(isEntityClassEmbedded) {
 			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
+			_class.setEmbeddedIdClassId(classId);
+		}
+			
+
 		return _class;
 	}
 
-	private MyClass createService(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
+	private MyClass createService(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded,Long classId) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Service");
 		Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
@@ -162,20 +167,28 @@ public class ClassService {
 		_class.setClassType("Service_GEN");
 		System.out.println(idOfProperty);
 		_class.setIdOfPropertyId(idOfProperty);
-		if(isEntityClassEmbedded)
+		if(isEntityClassEmbedded) {
 			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
+		_class.setEmbeddedIdClassId(classId);
+		}
+
+
 		return _class;
 	}
 
-	private MyClass createController(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
+	private MyClass createController(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded,Long classId) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Controller");
 		Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
 		_class.setPackageName(project.getGroupId() + ".Controller");
 		_class.setClassType("Controller_GEN");
 		_class.setIdOfPropertyId(idOfProperty);
-		if(isEntityClassEmbedded)
+		if(isEntityClassEmbedded) {
 			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
+			_class.setEmbeddedIdClassId(classId);
+		}
+		
+
 		return _class;
 	}
 
@@ -240,6 +253,7 @@ public class ClassService {
 		requestCreateClass.setRequestMappingURL(_class.getRequestMappingURL());
 		requestCreateClass.setEmbeddedId(_class.isEmbeddedId());
 		requestCreateClass.setIdOfPropertyId(_class.getIdOfPropertyId());
+		requestCreateClass.setEmbeddedIdClassId(_class.getEmbeddedIdClassId());
 		return requestCreateClass;
 	}
 

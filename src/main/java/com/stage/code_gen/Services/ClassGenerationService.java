@@ -38,7 +38,6 @@ public class ClassGenerationService {
 	private final MethodRepository methodRepository;
 	private final ClassRepository classRepository;
 	private final ProjectRepository projectRepository;
-	
 
 
 	public String generateClass(RequestCreateClass _class) {
@@ -295,7 +294,7 @@ public class ClassGenerationService {
 		MyProperty idPropertyOfEntity= propertyRepository.findById(_class.getIdOfPropertyId()).get();
 
 		//adding the import if the entity class has a composite id
-		if(_class.isEmbeddedId()) {
+		if(_class.isEmbeddedId() && !idPropertyOfEntity.getType().toString().equals("String")) {
 			javaClass.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType());
 		}
 		
@@ -314,18 +313,16 @@ public class ClassGenerationService {
 	private String generateJpaRepository(RequestCreateClass _class) {
 		MyProperty idPropertyOfEntity= propertyRepository.findById(_class.getIdOfPropertyId()).get();
 		Project project = projectRepository.findByClassesId(_class.getId());
-
-		System.out.println("");
 		if (idPropertyOfEntity != null) {
 			// make sure that the first letter of the type is uppercase
 			JavaInterfaceSource javainterface = Roaster.create(JavaInterfaceSource.class);
 			String idPropertyTypeWithUpperCase = getIdPropertyType(idPropertyOfEntity.getType());
 			if(idPropertyTypeWithUpperCase.equals("Int")) {
-				idPropertyTypeWithUpperCase = "Interger";
+				idPropertyTypeWithUpperCase = "Integer";
 			}
 		
-			if(_class.isEmbeddedId()) {
-				javainterface.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType());
+			if(_class.isEmbeddedId() && !idPropertyOfEntity.getType().toString().equals("String")) {
+				javainterface.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType().toString()+"");
 			}
 			// setting the name of the repo
 			javainterface.setName(_class.getClassName());
@@ -418,29 +415,35 @@ public class ClassGenerationService {
 										.setReturnType("void");
 		my_parameter = my_method.addParameter(entityName, entityNameWithLowerCase);
 		my_parameter.addAnnotation("org.springframework.web.bind.annotation.RequestBody");
-		MyClass embeddedClass = classRepository.findByClassName(idPropertyOfEntity.getType());
+		MyClass embeddedClass=null;
+		if(_class.getEmbeddedIdClassId()!=null) {
+			embeddedClass = classRepository.findById(_class.getEmbeddedIdClassId()).get();
+		}
 
 		if(_class.isEmbeddedId() && embeddedClass!=null) {
 			String pathOfPathVariables="/"+entityNameWithLowerCase; //example of this path of (Entity/{id1}/{id2}) 
 
 			 addedCodeIfTheEntityClassHasAnEmbeddable=idPropertyOfEntity.getType()+" "+idPropertyOfEntity.getName()+" = new "+idPropertyOfEntity.getType()+"();\n"; //this is the code that needs to be add if the class is embeddable it will add the id.set()..
 			for(MyProperty property: propertyRepository.findByMyclassId(embeddedClass.getId())) {
-				my_parameter= my_method.addParameter(property.getType(), property.getName());
+				my_parameter= my_method.addParameter(property.getType(), "_"+property.getName());
 				my_parameter.addAnnotation("org.springframework.web.bind.annotation.PathVariable");
-				pathOfPathVariables +="/{"+property.getName()+"}"; 
-				addedCodeIfTheEntityClassHasAnEmbeddable +=idPropertyOfEntity.getName()+".set"+property.getName().substring(0,1).toUpperCase()+property.getName().substring(1)+"("+property.getName()+");\n"; //here we are setting the properties
+				pathOfPathVariables +="/{_"+property.getName()+"}"; 
+				addedCodeIfTheEntityClassHasAnEmbeddable +=idPropertyOfEntity.getName()+".set"+property.getName().substring(0,1).toUpperCase()+property.getName().substring(1)+"(_"+property.getName()+");\n"; //here we are setting the properties
 			}
 			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue(pathOfPathVariables);
 
 			addedCodeIfTheEntityClassHasAnEmbeddable+=entityNameWithLowerCase+".set"+idPropertyOfEntity.getName().substring(0,1).toUpperCase()+idPropertyOfEntity.getName().substring(1)+"("+idPropertyOfEntity.getName()+");\n";//setting the composite object created to the class 
 		}
 		else {
-			my_parameter = my_method.addParameter(idPropertyOfEntity.getType(),idPropertyOfEntity.getName());
+			my_parameter = my_method.addParameter(idPropertyOfEntity.getType(),"_"+idPropertyOfEntity.getName());
 			my_parameter.addAnnotation("org.springframework.web.bind.annotation.PathVariable");
-			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue("/"+entityNameWithLowerCase+"/{"+idPropertyOfEntity.getName()+"}");
+			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue("/"+entityNameWithLowerCase+"/{_"+idPropertyOfEntity.getName()+"}");
 
 		}
-		my_method.setBody(addedCodeIfTheEntityClassHasAnEmbeddable+serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +","+idPropertyOfEntity.getName()+");");
+		String idString=idPropertyOfEntity.getName();
+		//if(idPropertyOfEntity.getName().equals(entityNameWithLowerCase))
+			//idString="_"+idPropertyOfEntity.getName();
+		my_method.setBody(addedCodeIfTheEntityClassHasAnEmbeddable+serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +", "+idString+");");
 		
 		//-----------------------------------------------Delete an entity-------------------------
 		my_method = javaClass.addMethod()

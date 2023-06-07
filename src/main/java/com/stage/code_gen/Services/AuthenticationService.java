@@ -140,6 +140,7 @@ public class AuthenticationService {
 		user.setRole(Role.USER);
 		userRepository.save(user);
 	}
+	
 	public List<User> getAllUsers(){
 		return userRepository.findAll();
 	}
@@ -148,6 +149,9 @@ public class AuthenticationService {
 	}
 	public void userForgotPassword(String email) throws UnsupportedEncodingException, MessagingException {
 		sendResetPasswordEmail(email,"http://localhost:4200/verifyAccount");
+	}
+	public void deleteUser(String email) {
+		userRepository.deleteById(email);
 	}
 
 	

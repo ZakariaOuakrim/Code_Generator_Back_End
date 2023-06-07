@@ -94,6 +94,7 @@ public class ProjectGenerationService {
 
 		for (String packageName : classRepository.findAllPackages(project.getClasses())) {
 			for (MyClass classOfPackage : project.getClasses()) {
+				System.out.println("------Current Class "+classOfPackage.getClassName());
 				if (classOfPackage.getPackageName().equals(packageName)) {
 					files2 = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId()
 							+ "\\src\\main\\java" + packageCreated + "\\" + classOfPackage.getPackageName()
