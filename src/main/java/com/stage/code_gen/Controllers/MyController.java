@@ -234,10 +234,9 @@ public class MyController {
 
 	// delete dependency from a project
 	@DeleteMapping("/project/deleteDependencyFromProject/{project_id}/{dependencyId}")
-	public String deleteDependencyFromProject(@PathVariable("project_id") Long projectId,
+	public void deleteDependencyFromProject(@PathVariable("project_id") Long projectId,
 			@PathVariable("dependencyId") Long dependencyId) {
 		projectService.deleteDependencyFromProject(projectId, dependencyId);
-		return "Deleted successfully";
 	}
 	@PutMapping("/project/modifyProject/{id}")
 	public void modifyProject(@PathVariable("id") Long id,@RequestBody Project project) {

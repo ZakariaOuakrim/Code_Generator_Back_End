@@ -61,27 +61,33 @@ public class ClassService {
 		myclass.setGeneratedType(requestCreateClass.getGeneratedType());
 		myclass.setGeneratedValue(requestCreateClass.isGeneratedValue());
 		myclass.setEmbeddedId(requestCreateClass.isEmbeddedId());
+		myclass.setIdOfPropertyId(requestCreateClass.getIdOfPropertyId());
 		if (requestCreateClass.getMode() != null && requestCreateClass.getMode().equals("modify")) {
 			classRepository.findById(requestCreateClass.getId());
 			return 0L;
 		}
 		MyClass classToGetId;
 		try {
-			classToGetId=classRepository.save(myclass);
+			classToGetId = classRepository.save(myclass);
 		} catch (DataIntegrityViolationException e) {
-			System.out.println("------------Class Already exsits");
 			return -1L;
 		}
-
+		boolean getIdPropertyOnce = false;
+		Long idOfProperty = 0L;
 		// adding the properties
 		if (requestCreateClass.getProperties() != null && requestCreateClass.getProperties().length >= 1) {
-			for (MyProperty prop : requestCreateClass.getProperties()) {	
+			for (MyProperty prop : requestCreateClass.getProperties()) {
+
 				classRepository.findById(myclass.getId()).map(my_class -> {
 					prop.setMyclass(myclass);
 					return propertyRepository.save(prop);
 				});
 			}
 		}
+		List<MyProperty> properties=propertyRepository.findByMyclassId(classToGetId.getId()); 
+		getIdPropertyOnce = true;
+		idOfProperty = properties.get(0).getId();
+
 		// adding the methods
 		if (requestCreateClass.getMethods() != null && requestCreateClass.getMethods().length >= 1) {
 			List<MyParameter> params;
@@ -106,14 +112,14 @@ public class ClassService {
 		MyClass _classService = null;
 		MyClass _classController = null;
 		if (requestCreateClass.isGenerateRepository()) {
-			_classRepo = createRepository(requestCreateClass);
+			_classRepo = createRepository(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
 		}
 		if (requestCreateClass.isService()) {
-			_classService = createService(requestCreateClass);
+			_classService = createService(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
 
 		}
 		if (requestCreateClass.isGenerateController()) {
-			_classController = createController(requestCreateClass);
+			_classController = createController(requestCreateClass, idOfProperty,requestCreateClass.isEmbeddedId());
 		}
 		try {
 			Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
@@ -135,32 +141,41 @@ public class ClassService {
 
 	}
 
-	private MyClass createRepository(RequestCreateClass requestCreateClass) {
+	private MyClass createRepository(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Repository");
 		_class.setClassType("JPA_INTERFACE");
 		Long projectId = requestCreateClass.getProjectId();
 		Project project = projectRepository.findById(projectId).get();
 		_class.setPackageName(project.getGroupId() + ".Repositories");
-
+		_class.setIdOfPropertyId(idOfProperty);
+		if(isEntityClassEmbedded)
+			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
 		return _class;
 	}
 
-	private MyClass createService(RequestCreateClass requestCreateClass) {
+	private MyClass createService(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Service");
 		Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
 		_class.setPackageName(project.getGroupId() + ".Services");
 		_class.setClassType("Service_GEN");
+		System.out.println(idOfProperty);
+		_class.setIdOfPropertyId(idOfProperty);
+		if(isEntityClassEmbedded)
+			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
 		return _class;
 	}
 
-	private MyClass createController(RequestCreateClass requestCreateClass) {
+	private MyClass createController(RequestCreateClass requestCreateClass, Long idOfProperty,Boolean isEntityClassEmbedded) {
 		MyClass _class = new MyClass();
 		_class.setClassName(requestCreateClass.getClassName() + "Controller");
 		Project project = projectRepository.findById(requestCreateClass.getProjectId()).get();
 		_class.setPackageName(project.getGroupId() + ".Controller");
 		_class.setClassType("Controller_GEN");
+		_class.setIdOfPropertyId(idOfProperty);
+		if(isEntityClassEmbedded)
+			_class.setEmbeddedId(true);//setting o embedded so we can import the id class
 		return _class;
 	}
 
@@ -224,6 +239,7 @@ public class ClassService {
 		requestCreateClass.setGeneratedType(_class.getGeneratedType());
 		requestCreateClass.setRequestMappingURL(_class.getRequestMappingURL());
 		requestCreateClass.setEmbeddedId(_class.isEmbeddedId());
+		requestCreateClass.setIdOfPropertyId(_class.getIdOfPropertyId());
 		return requestCreateClass;
 	}
 
@@ -231,7 +247,7 @@ public class ClassService {
 		List<Project> projects = projectService.getAllProjects(email);
 		List<MyClass> classes = new ArrayList<>();
 		for (Project project : projects) {
-			for(MyClass _class : project.getClasses()) {
+			for (MyClass _class : project.getClasses()) {
 				classes.add(_class);
 			}
 		}
@@ -242,12 +258,11 @@ public class ClassService {
 		List<Project> projects = projectService.getAllProjects(email);
 		List<String> packageNames = new ArrayList<>();
 		for (Project project : projects) {
-			for( String _package :getAllPackageNames(project.getId())) {
+			for (String _package : getAllPackageNames(project.getId())) {
 				packageNames.add(_package);
 			}
 		}
 		return packageNames;
 	}
 
-	 
 }

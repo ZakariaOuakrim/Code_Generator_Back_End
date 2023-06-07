@@ -40,5 +40,6 @@ public class MyClass {
 	private boolean isEmbeddedId; //does the class has an @EmbeddedId
 	private String generatedType;
 	private String requestMappingURL;
+	private Long idOfPropertyId;
 	 
 }

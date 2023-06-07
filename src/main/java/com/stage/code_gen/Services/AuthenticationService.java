@@ -149,6 +149,7 @@ public class AuthenticationService {
 	public void userForgotPassword(String email) throws UnsupportedEncodingException, MessagingException {
 		sendResetPasswordEmail(email,"http://localhost:4200/verifyAccount");
 	}
+
 	
 	
 }

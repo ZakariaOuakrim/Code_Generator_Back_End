@@ -2,6 +2,7 @@ package com.stage.code_gen.Services;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.Serializable;
 import java.util.List;
 
 import org.jboss.forge.roaster.Roaster;
@@ -37,6 +38,8 @@ public class ClassGenerationService {
 	private final MethodRepository methodRepository;
 	private final ClassRepository classRepository;
 	private final ProjectRepository projectRepository;
+	
+
 
 	public String generateClass(RequestCreateClass _class) {
 		String javaCode;
@@ -57,6 +60,8 @@ public class ClassGenerationService {
 		PropertySource<JavaClassSource> property;
 		FieldSource<JavaClassSource> field;
 		AnnotationSource<JavaClassSource> annotation;
+		AnnotationSource<JavaClassSource> apiModelPropertyAnnotation;
+
 		boolean FieldAlreadyGotAssigndTheIdAnnotation = false;
 
 		// setting the class name and the package name
@@ -66,6 +71,9 @@ public class ClassGenerationService {
 		// setting the annotation of the class
 		if (_class.getClassType() != null && !_class.getClassType().equals("JPA_INTERFACE")) {
 			javaClass.addAnnotation(typeAnnotation(_class.getClassType()));
+			if(_class.getClassType().equals("Embeddable")) {
+				javaClass.addInterface(Serializable.class);
+			}
 		}
 		if (_class.getTableName() != null) {
 			javaClass.addAnnotation("javax.persistence.Table").setStringValue("name",_class.getTableName());
@@ -78,9 +86,9 @@ public class ClassGenerationService {
 		List<MyProperty> properties = propertyRepository.findByMyclassId(_class.getId());
 		
 		if (properties != null && !properties.isEmpty()) {
-			for (MyProperty prop : properties) {
+			for (MyProperty prop : properties) {//for each property of the class 
 				property = javaClass.addProperty(prop.getType(), prop.getName());
-				if(!_class.getClassType().equals("Entity") || !_class.getClass().equals("Embeddable")){
+				if(!_class.getClassType().equals("Entity") && !_class.getClassType().equals("Embeddable")){
 					property.removeAccessor().removeMutator();
 				}
 				field = javaClass.getField(prop.getName());
@@ -98,16 +106,15 @@ public class ClassGenerationService {
 					field.setPackagePrivate();
 					break;
 				}
-				System.out.println("101 -----is my class "+_class.getId()+" embdedded ??"+_class.isEmbeddedId());
 				if(_class.isEmbeddedId() && !FieldAlreadyGotAssigndTheIdAnnotation) {
 					field.addAnnotation("javax.persistence.EmbeddedId");
 					FieldAlreadyGotAssigndTheIdAnnotation=true;
-
 				}
 
 				if (_class.isIdGenerate() && !FieldAlreadyGotAssigndTheIdAnnotation) {
 					field.addAnnotation("javax.persistence.Id");
 					FieldAlreadyGotAssigndTheIdAnnotation = true;
+
 					if (_class.isGeneratedValue()) {
 						switch (_class.getGeneratedType()) {
 						case "AUTO":
@@ -130,12 +137,20 @@ public class ClassGenerationService {
 						}
 					}
 				}
-				if(prop.getColumnName()!=null) {
+				
+				if(prop.getColumnName()!=null) { //adding the @column annotation
 					if (!prop.getColumnName().equals("")) {
 						annotation = field.addAnnotation("javax.persistence.Column");
-						annotation.setStringValue("name", prop.getColumnName());
+						annotation.setStringValue("name", prop.getColumnName()); //setting the name= in the @Column
+						//adding the @ApiModelProperty
+						apiModelPropertyAnnotation = field.addAnnotation("io.swagger.annotations.ApiModelProperty");
+						apiModelPropertyAnnotation.setStringValue("value",prop.getColumnName()); //setting the value= in the @ApiModel
+
 						if(prop.getLength()!=null ) {
 							annotation.setLiteralValue("length", prop.getLength());
+							apiModelPropertyAnnotation.setStringValue("allowableValues","range[1,"+prop.getLength()+"]");
+							if(prop.getType().equals("String") || prop.getType().equals("java.lang.Character") || prop.getType().equals("char") || prop.getType().equals("Character")) 
+								apiModelPropertyAnnotation.setStringValue("example",generateExampleWord(Integer.valueOf(prop.getLength())));
 						}
 					}
 				}
@@ -144,7 +159,7 @@ public class ClassGenerationService {
 				if (prop.isAutowired()) {
 					field.addAnnotation("org.springframework.beans.factory.annotation.Autowired");
 				}
-			}
+			}//end of for
 		}
 		// ------------------------Method-------------------------
 		MethodSource<JavaClassSource> my_method;
@@ -228,13 +243,29 @@ public class ClassGenerationService {
 			return ClassType;
 		}
 	}
-
+	
+	private String generateExampleWord(int length) {
+		StringBuilder word= new StringBuilder();
+		for(int i=0;i<length;i++) {
+			char randomChar = (char) ('a'+Math.random() * ('z'-'a'+1));
+            word.append(randomChar);
+		}
+		return word.toString();
+	}
+	
 	private String generateController(RequestCreateClass _class) {
 		JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
 		PropertySource<JavaClassSource> property;
 		FieldSource<JavaClassSource> field;
-		//setting the request url
-	
+		Project project = projectRepository.findByClassesId(_class.getId());
+		MyProperty idPropertyOfEntity= propertyRepository.findById(_class.getIdOfPropertyId()).get();
+
+		//adding the import if the entity class has a composite id
+		if(_class.isEmbeddedId()) {
+			javaClass.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType());
+		}
+		
+		
 		javaClass.setName(_class.getClassName());
 		String serviceName = _class.getClassName().substring(0, 1).toLowerCase()
 				+ _class.getClassName().substring(1).replace("Controller", "Service");
@@ -244,7 +275,7 @@ public class ClassGenerationService {
 		property = javaClass.addProperty(serviceType, serviceName).removeAccessor().removeMutator();
 		field = javaClass.getField(serviceName);
 		field.addAnnotation("org.springframework.beans.factory.annotation.Autowired");
-		javaClass = generateMethodsForController(javaClass, _class, serviceName);
+		javaClass = generateMethodsForController(javaClass, _class, serviceName,idPropertyOfEntity);
 		
 		
 		return javaClass.toString();
@@ -260,6 +291,13 @@ public class ClassGenerationService {
 		Project project = projectRepository.findByClassesId(_class.getId());
 		javaClass.addImport(project.getGroupId()+".Repositories."+_class.getClassName().replace("Service", "Repository"));
 		javaClass.addImport(project.getGroupId()+".Entity."+_class.getClassName().replace("Service", ""));
+
+		MyProperty idPropertyOfEntity= propertyRepository.findById(_class.getIdOfPropertyId()).get();
+
+		//adding the import if the entity class has a composite id
+		if(_class.isEmbeddedId()) {
+			javaClass.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType());
+		}
 		
 		PropertySource<JavaClassSource> property;
 		FieldSource<JavaClassSource> field;
@@ -270,26 +308,28 @@ public class ClassGenerationService {
 		property = javaClass.addProperty(repositoryType, repositoryName).removeAccessor().removeMutator();
 		field = javaClass.getField(repositoryName);
 		field.addAnnotation("org.springframework.beans.factory.annotation.Autowired");
-		javaClass = generateMethodsForService(javaClass, _class, repositoryName);
+		javaClass = generateMethodsForService(javaClass, _class, repositoryName,idPropertyOfEntity);
 		return javaClass.toString();
 	}
-
 	private String generateJpaRepository(RequestCreateClass _class) {
-		MyProperty idPropertyType = getIdPropertyType(_class);
+		MyProperty idPropertyOfEntity= propertyRepository.findById(_class.getIdOfPropertyId()).get();
+		Project project = projectRepository.findByClassesId(_class.getId());
+
 		System.out.println("");
-		if (idPropertyType != null) {
+		if (idPropertyOfEntity != null) {
 			// make sure that the first letter of the type is uppercase
 			JavaInterfaceSource javainterface = Roaster.create(JavaInterfaceSource.class);
-			String idPropertyTypeWithUpperCase = getIdPropertyType(idPropertyType.getType());
-			switch(idPropertyTypeWithUpperCase) {
-				case "Int":
-					idPropertyTypeWithUpperCase = "Interger";
-					break;
+			String idPropertyTypeWithUpperCase = getIdPropertyType(idPropertyOfEntity.getType());
+			if(idPropertyTypeWithUpperCase.equals("Int")) {
+				idPropertyTypeWithUpperCase = "Interger";
+			}
+		
+			if(_class.isEmbeddedId()) {
+				javainterface.addImport(project.getGroupId()+".Entity."+idPropertyOfEntity.getType());
 			}
 			// setting the name of the repo
 			javainterface.setName(_class.getClassName());
 			
-			Project project = projectRepository.findByClassesId(_class.getId());
 			javainterface.addImport(project.getGroupId()+".Entity."+_class.getClassName().replace("Repository", ""));
 			javainterface.setPackage(_class.getPackageName());
 			javainterface.addAnnotation("org.springframework.stereotype.Repository");
@@ -303,72 +343,58 @@ public class ClassGenerationService {
 
 	}
 
-	private MyProperty getIdPropertyType(RequestCreateClass requestCreateClass) {
-		// -----------------id - 1 so I can get the entity
-		List<MyProperty> properties = propertyRepository.findByMyclassId(requestCreateClass.getId() - 1);
-		// -------------------getting the entity class
-		MyClass _class = classRepository.findById(requestCreateClass.getId() - 1).get();
-		if (properties != null) {
-			if (_class.isIdGenerate() || _class.isEmbeddedId()) {
-				return properties.get(0);
-			}
-			else {
-				return null;
-			}
-		}
-		return null;
-	}
-
 	private String getIdPropertyType(String propertyType) {
 		return propertyType.substring(0, 1).toUpperCase() + propertyType.substring(1);
 	}
 
 	// this is method is used for generating the methods for the service class CRUD
 	private JavaClassSource generateMethodsForService(JavaClassSource javaClass, RequestCreateClass _class,
-			String repositoryName) {
+			String repositoryName,MyProperty idPropertyOfEntity) {
 		MethodSource<JavaClassSource> my_method;
 		String entityName = _class.getClassName().replace("Service", "");
 		String entityNameWithLowerCase = entityName.substring(0, 1).toLowerCase() + entityName.substring(1);
-		
 		
 		// ------------------Saving an Entity-------------------------------------
 		my_method = javaClass.addMethod().setName("saveNew" + entityName).setVisibility(Visibility.PUBLIC)
 				.setReturnType("void");
 		my_method.addParameter(entityName, entityNameWithLowerCase);
 		my_method.setBody(repositoryName + ".save(" + entityNameWithLowerCase + ");");
-
+		
 		// ----------------------Reading the Entities------------------------
 		String returnType = "List<" + entityName + ">";
 		javaClass.addImport("java.util.List");
-		my_method = javaClass.addMethod().setName("getAll" + entityName + "s").setVisibility(Visibility.PUBLIC)
+		my_method = javaClass.addMethod().setName("getAll" + entityName ).setVisibility(Visibility.PUBLIC)
 				.setReturnType(returnType);
 		my_method.setBody("return " + repositoryName + ".findAll();");
 
 		// -----------------------Updating an Entity--------------------
 		my_method = javaClass.addMethod().setName("update" + entityName).setVisibility(Visibility.PUBLIC)
 				.setReturnType("void");
-		my_method.addParameter(entityName, entityNameWithLowerCase);
-		my_method.setBody(repositoryName + ".save(" + entityNameWithLowerCase + ");");
+		my_method.addParameter(entityName, "updated"+entityName); // add the as a parameter Entity updatedEntity
+		my_method.addParameter(idPropertyOfEntity.getType(),idPropertyOfEntity.getName());
+		String methodBody = entityName+ " existing"+entityName+" ="+repositoryName+".findById("+idPropertyOfEntity.getName()+").get();\n "
+				+ "updated"+entityName+".set"+idPropertyOfEntity.getName().substring(0,1).toUpperCase()+idPropertyOfEntity.getName().substring(1)+"("+idPropertyOfEntity.getName()+");\n"
+				+ "existing"+entityName+"=updated"+entityName+";\n"
+				+ repositoryName+".save(existing"+entityName+");";
+		my_method.setBody(methodBody);                    
 
 		// ------------------------Deleting an Entity--------------------------
 		my_method = javaClass.addMethod().setName("delete" + entityName).setVisibility(Visibility.PUBLIC)
 				.setReturnType("void");
-		my_method.addParameter(entityName, entityNameWithLowerCase);
-		my_method.setBody(repositoryName + ".delete(" + entityNameWithLowerCase + ");");
+		my_method.addParameter(idPropertyOfEntity.getType(), idPropertyOfEntity.getName());
+		my_method.setBody(repositoryName + ".deleteById(" + idPropertyOfEntity.getName() +");");
 		return javaClass;
 	}
 
 	private JavaClassSource generateMethodsForController(JavaClassSource javaClass, RequestCreateClass _class,
-			String serviceName) {
+			String serviceName,MyProperty idPropertyOfEntity ) {
 		MethodSource<JavaClassSource> my_method;
 		ParameterSource<JavaClassSource> my_parameter;
 		String entityName = _class.getClassName().replace("Controller", "");
 		String entityNameWithLowerCase = entityName.substring(0, 1).toLowerCase() + entityName.substring(1);
-		String entities = entityNameWithLowerCase + "s";
-		//Add the request url to the class
+
 		
-		//testing
-		
+		String addedCodeIfTheEntityClassHasAnEmbeddable=""; //this is the code that needs to be add if the class is embeddable it will add the id.set()..
 		Project project = projectRepository.findByClassesId(_class.getId());
 		javaClass.addImport(project.getGroupId()+".Entity."+entityName);
 		javaClass.addImport(project.getGroupId()+".Services."+_class.getClassName().replace("Controller", "Service"));
@@ -380,29 +406,50 @@ public class ClassGenerationService {
 		//my_parameter.addAnnotation("javax.validation.Valid");
 		my_parameter.addAnnotation("org.springframework.web.bind.annotation.RequestBody");
 		my_method.setBody(serviceName + ".saveNew" + entityName + "(" + entityNameWithLowerCase + ");");
-		my_method.addAnnotation("org.springframework.web.bind.annotation.PostMapping").setStringValue("/" + entities);
+		my_method.addAnnotation("org.springframework.web.bind.annotation.PostMapping").setStringValue("/" + entityNameWithLowerCase);
 
 		// --------------------------------------------------Read entity----------------------------------------------
-		my_method = javaClass.addMethod().setName("getAll" + entityName+"s").setVisibility(Visibility.PUBLIC)
-				.setReturnType("List<" + entityName + ">").setBody("return " + serviceName + ".getAll" + entityName+"s();");
-		my_method.addAnnotation("org.springframework.web.bind.annotation.GetMapping").setStringValue("/" + entities);
+		my_method = javaClass.addMethod().setName("getAll" + entityName).setVisibility(Visibility.PUBLIC)
+				.setReturnType("List<" + entityName + ">").setBody("return " + serviceName + ".getAll" + entityName+"();");
+		my_method.addAnnotation("org.springframework.web.bind.annotation.GetMapping").setStringValue("/" + entityNameWithLowerCase);
 
 		// ----------------------------------------------Update an entity----------------------------
 		my_method = javaClass.addMethod().setName("update" + entityName).setVisibility(Visibility.PUBLIC)
-										.setReturnType("void")
-										.setBody( serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +");");
+										.setReturnType("void");
 		my_parameter = my_method.addParameter(entityName, entityNameWithLowerCase);
 		my_parameter.addAnnotation("org.springframework.web.bind.annotation.RequestBody");
-		my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue("/"+entities);
+		MyClass embeddedClass = classRepository.findByClassName(idPropertyOfEntity.getType());
 
+		if(_class.isEmbeddedId() && embeddedClass!=null) {
+			String pathOfPathVariables="/"+entityNameWithLowerCase; //example of this path of (Entity/{id1}/{id2}) 
+
+			 addedCodeIfTheEntityClassHasAnEmbeddable=idPropertyOfEntity.getType()+" "+idPropertyOfEntity.getName()+" = new "+idPropertyOfEntity.getType()+"();\n"; //this is the code that needs to be add if the class is embeddable it will add the id.set()..
+			for(MyProperty property: propertyRepository.findByMyclassId(embeddedClass.getId())) {
+				my_parameter= my_method.addParameter(property.getType(), property.getName());
+				my_parameter.addAnnotation("org.springframework.web.bind.annotation.PathVariable");
+				pathOfPathVariables +="/{"+property.getName()+"}"; 
+				addedCodeIfTheEntityClassHasAnEmbeddable +=idPropertyOfEntity.getName()+".set"+property.getName().substring(0,1).toUpperCase()+property.getName().substring(1)+"("+property.getName()+");\n"; //here we are setting the properties
+			}
+			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue(pathOfPathVariables);
+
+			addedCodeIfTheEntityClassHasAnEmbeddable+=entityNameWithLowerCase+".set"+idPropertyOfEntity.getName().substring(0,1).toUpperCase()+idPropertyOfEntity.getName().substring(1)+"("+idPropertyOfEntity.getName()+");\n";//setting the composite object created to the class 
+		}
+		else {
+			my_parameter = my_method.addParameter(idPropertyOfEntity.getType(),idPropertyOfEntity.getName());
+			my_parameter.addAnnotation("org.springframework.web.bind.annotation.PathVariable");
+			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue("/"+entityNameWithLowerCase+"/{"+idPropertyOfEntity.getName()+"}");
+
+		}
+		my_method.setBody(addedCodeIfTheEntityClassHasAnEmbeddable+serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +","+idPropertyOfEntity.getName()+");");
+		
 		//-----------------------------------------------Delete an entity-------------------------
 		my_method = javaClass.addMethod()
 				.setName("delete"+entityName)
 				.setVisibility(Visibility.PUBLIC)
 				.setReturnType(String.class)
-				.setBody(serviceName+".delete"+entityName+"("+entityNameWithLowerCase+"); return \"Deleted Successfully\";");
-		my_method.addParameter(entityName,entityNameWithLowerCase).addAnnotation("org.springframework.web.bind.annotation.RequestBody");
-		my_method.addAnnotation("org.springframework.web.bind.annotation.DeleteMapping").setStringValue("/"+entities);		
+				.setBody(serviceName+".delete"+entityName+"("+idPropertyOfEntity.getName()+"); return \"Deleted Successfully\";");
+		my_method.addParameter(idPropertyOfEntity.getType(),idPropertyOfEntity.getName()).addAnnotation("org.springframework.web.bind.annotation.RequestBody");
+		my_method.addAnnotation("org.springframework.web.bind.annotation.DeleteMapping").setStringValue("/"+entityNameWithLowerCase);		
 		
 		return javaClass;
 	}

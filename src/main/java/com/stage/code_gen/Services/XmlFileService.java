@@ -179,6 +179,7 @@ public class XmlFileService {
 				return "java.sql.Timestamp";
 			case "text":
 				return "String";
+			
 			default:
 				return xmlType;
 	
