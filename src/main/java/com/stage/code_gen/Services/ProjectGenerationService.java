@@ -37,24 +37,24 @@ public class ProjectGenerationService {
 	private final ClassService classService;
 	private final AuthenticationService authenticationService;
 	private final ApplicationSettingService applicationSettingService;
-
+	private final String creationRoute="C:\\Users\\Dell\\Desktop\\generated_classes\\"; //where is the project going to be stored
+	
 	public void generateProject(Project project,String email) throws IOException {
+	
 		RequestCreateClass _class;
-		File f = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId());
+		File f = new File(creationRoute + project.getArtifactId());
 		f.mkdir();
-		File srcmainjava = new File(
-				"C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + "\\src\\main\\java");
+		File srcmainjava = new File(creationRoute + project.getArtifactId() + "\\src\\main\\java");
 		srcmainjava.mkdirs();
 		// resources File
-		File srcmainresources = new File(
-				"C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + "\\src\\main\\resources");
+		File srcmainresources = new File(creationRoute+ project.getArtifactId() + "\\src\\main\\resources");
 		srcmainresources.mkdir();
 		// static file
-		srcmainresources = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId()
+		srcmainresources = new File(creationRoute+ project.getArtifactId()
 				+ "\\src\\main\\resources\\static");
 		srcmainresources.mkdir();
 		// templates file
-		srcmainresources = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId()
+		srcmainresources = new File(creationRoute + project.getArtifactId()
 				+ "\\src\\main\\resources\\templates");
 		srcmainresources.mkdir();
 		// application.properties File
@@ -72,16 +72,16 @@ public class ProjectGenerationService {
 		for (String _package : project_packageName) {
 			packageCreated = packageCreated + "\\" + _package;
 		}
-		files = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + "\\src\\main\\java"
+		files = new File(creationRoute + project.getArtifactId() + "\\src\\main\\java"
 				+ packageCreated);
 		files.mkdirs();
 
 		// -------------------Creating the Config package for
 		// configuration--------------------
-		files = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + "\\src\\main\\java"
+		files = new File(creationRoute + project.getArtifactId() + "\\src\\main\\java"
 				+ packageCreated + "\\Config");
 		files.mkdir();
-		files = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId() + "\\src\\main\\java"
+		files = new File(creationRoute+ project.getArtifactId() + "\\src\\main\\java"
 				+ packageCreated );
 		files.mkdir();
 		// generating the config file
@@ -96,7 +96,7 @@ public class ProjectGenerationService {
 			for (MyClass classOfPackage : project.getClasses()) {
 				System.out.println("------Current Class "+classOfPackage.getClassName());
 				if (classOfPackage.getPackageName().equals(packageName)) {
-					files2 = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId()
+					files2 = new File(creationRoute + project.getArtifactId()
 							+ "\\src\\main\\java" + packageCreated + "\\" + classOfPackage.getPackageName()
 									.substring(classOfPackage.getPackageName().lastIndexOf('.') + 1));
 					files2.mkdir();
@@ -236,7 +236,7 @@ public class ProjectGenerationService {
 				+"spring.datasource.driverClassName=org.postgresql.Driver\n"+"spring.jpa.hibernate.ddl-auto = update\n"
 				+ "spring.jpa.properties.hibernate.default_schema=my_schema";
 		try {
-			File file = new File("C:\\Users\\Dell\\Desktop\\generated_classes\\" + project.getArtifactId()
+			File file = new File(creationRoute + project.getArtifactId()
 			+ "\\src\\main\\resources\\application.properties");
 			FileWriter writer = new FileWriter(file);
 			writer.write(fileText);

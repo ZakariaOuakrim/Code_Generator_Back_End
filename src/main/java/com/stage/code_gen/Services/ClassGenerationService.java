@@ -1,4 +1,4 @@
-package com.stage.code_gen.Services;
+  package com.stage.code_gen.Services;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -423,16 +423,16 @@ public class ClassGenerationService {
 		if(_class.isEmbeddedId() && embeddedClass!=null) {
 			String pathOfPathVariables="/"+entityNameWithLowerCase; //example of this path of (Entity/{id1}/{id2}) 
 
-			 addedCodeIfTheEntityClassHasAnEmbeddable=idPropertyOfEntity.getType()+" "+idPropertyOfEntity.getName()+" = new "+idPropertyOfEntity.getType()+"();\n"; //this is the code that needs to be add if the class is embeddable it will add the id.set()..
+			 addedCodeIfTheEntityClassHasAnEmbeddable=idPropertyOfEntity.getType()+" _"+idPropertyOfEntity.getName()+" = new "+idPropertyOfEntity.getType()+"();\n"; //this is the code that needs to be add if the class is embeddable it will add the id.set()..
 			for(MyProperty property: propertyRepository.findByMyclassId(embeddedClass.getId())) {
 				my_parameter= my_method.addParameter(property.getType(), "_"+property.getName());
 				my_parameter.addAnnotation("org.springframework.web.bind.annotation.PathVariable");
 				pathOfPathVariables +="/{_"+property.getName()+"}"; 
-				addedCodeIfTheEntityClassHasAnEmbeddable +=idPropertyOfEntity.getName()+".set"+property.getName().substring(0,1).toUpperCase()+property.getName().substring(1)+"(_"+property.getName()+");\n"; //here we are setting the properties
+				addedCodeIfTheEntityClassHasAnEmbeddable +="_"+idPropertyOfEntity.getName()+".set"+property.getName().substring(0,1).toUpperCase()+property.getName().substring(1)+"(_"+property.getName()+");\n"; //here we are setting the properties
 			}
 			my_method.addAnnotation("org.springframework.web.bind.annotation.PutMapping").setStringValue(pathOfPathVariables);
 
-			addedCodeIfTheEntityClassHasAnEmbeddable+=entityNameWithLowerCase+".set"+idPropertyOfEntity.getName().substring(0,1).toUpperCase()+idPropertyOfEntity.getName().substring(1)+"("+idPropertyOfEntity.getName()+");\n";//setting the composite object created to the class 
+			addedCodeIfTheEntityClassHasAnEmbeddable+=entityNameWithLowerCase+".set"+idPropertyOfEntity.getName().substring(0,1).toUpperCase()+idPropertyOfEntity.getName().substring(1)+"(_"+idPropertyOfEntity.getName()+");\n";//setting the composite object created to the class 
 		}
 		else {
 			my_parameter = my_method.addParameter(idPropertyOfEntity.getType(),"_"+idPropertyOfEntity.getName());
@@ -443,7 +443,7 @@ public class ClassGenerationService {
 		String idString=idPropertyOfEntity.getName();
 		//if(idPropertyOfEntity.getName().equals(entityNameWithLowerCase))
 			//idString="_"+idPropertyOfEntity.getName();
-		my_method.setBody(addedCodeIfTheEntityClassHasAnEmbeddable+serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +", "+idString+");");
+		my_method.setBody(addedCodeIfTheEntityClassHasAnEmbeddable+serviceName+ ".update" + entityName + "("+ entityNameWithLowerCase +", _"+idString+");");
 		
 		//-----------------------------------------------Delete an entity-------------------------
 		my_method = javaClass.addMethod()

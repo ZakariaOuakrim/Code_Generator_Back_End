@@ -27,8 +27,7 @@ public class MyClass {
 	@GeneratedValue(strategy = jakarta.persistence.GenerationType.AUTO)
 	@Column(name="class_id")
 	private Long id;
-	
-	private String className;
+		private String className;
 	private String packageName;
 	private String classType;
 	private boolean service;
@@ -42,6 +41,7 @@ public class MyClass {
 	private String generatedType;
 	private String requestMappingURL;
 	private Long idOfPropertyId;
+	
 	
 	 
 }
