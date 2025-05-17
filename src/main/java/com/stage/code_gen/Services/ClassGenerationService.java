@@ -26,14 +26,14 @@ import com.stage.code_gen.Repositories.MethodRepository;
 import com.stage.code_gen.Repositories.ProjectRepository;
 import com.stage.code_gen.Repositories.PropertyRepository;
 import com.stage.code_gen.Requests_Responses.RequestCreateClass;
-import org.jboss.forge.roaster.model.source.JavaClassSource;
 
 import javax.persistence.GenerationType;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class ClassGenerationService {
+public class ClassGenerationService { 
+	//This is the Class Generation Service it's used to create the code of all the classes in the project 
 	private final PropertyRepository propertyRepository;
 	private final MethodRepository methodRepository;
 	private final ClassRepository classRepository;
@@ -41,6 +41,12 @@ public class ClassGenerationService {
 
 
 	public String generateClass(RequestCreateClass _class) {
+		PropertySource<JavaClassSource> property;
+		FieldSource<JavaClassSource> field;
+		AnnotationSource<JavaClassSource> annotation;
+		AnnotationSource<JavaClassSource> apiModelPropertyAnnotation;
+		boolean FieldAlreadyGotAssigndTheIdAnnotation = false;
+
 		String javaCode;
 		if (_class.getClassType().equals("JPA_INTERFACE")) {
 			javaCode=generateJpaRepository(_class);
@@ -56,12 +62,8 @@ public class ClassGenerationService {
 		}
 	
 		JavaClassSource javaClass = Roaster.create(JavaClassSource.class);
-		PropertySource<JavaClassSource> property;
-		FieldSource<JavaClassSource> field;
-		AnnotationSource<JavaClassSource> annotation;
-		AnnotationSource<JavaClassSource> apiModelPropertyAnnotation;
+		
 
-		boolean FieldAlreadyGotAssigndTheIdAnnotation = false;
 
 		// setting the class name and the package name
 		if(_class.getPackageName()!=null)
